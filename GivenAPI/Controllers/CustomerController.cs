@@ -1,4 +1,5 @@
-﻿using GivenAPI.Models;
+﻿using GivenAPI.DTO;
+using GivenAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,29 +19,44 @@ namespace GivenAPI.Controllers
         [HttpPost("delete/{CustomerId}")]
         public ActionResult deleteCustomer(string CustomerId)
         {
-            var ListoderId = _context.Customers.Include(s => s.Orders).ThenInclude(s => s.OrderDetails).FirstOrDefault(s => s.CustomerId == CustomerId);
-            int OrderdeleteCount = 0;
-            int OrderDetaildelete = 0;
+            var customer = _context.Customers
+                .Include(s => s.Orders)
+                .ThenInclude(s => s.OrderDetails)
+                .FirstOrDefault(s => s.CustomerId == CustomerId);
+            int customerDeleteCount = 0;
+            int orderDeleteCount = 0;
+            int orderDetailDeleteCount = 0;
 
-            if (ListoderId == null)
+            if (customer == null)
             {
-                return NotFound("Error Not found");
+                return NotFound("Customer not found");
             }
-            if (ListoderId != null)
+            else
             {
-                foreach (var orderId in ListoderId.Orders)
+                customerDeleteCount++;
+                foreach (var order in customer.Orders)
                 {
+                    orderDeleteCount++;
+                    orderDetailDeleteCount += order.OrderDetails.Count;
                     
-                    OrderdeleteCount++;
-                    OrderDetaildelete += orderId.OrderDetails.Count;
-                    _context.OrderDetails.RemoveRange(orderId.OrderDetails);
+                    _context.OrderDetails.RemoveRange(order.OrderDetails);
                 }
-                _context.Orders.RemoveRange(ListoderId.Orders);
-                _context.Customers.Remove(ListoderId);
 
-                return Ok(OrderDetaildelete);
+                _context.Orders.RemoveRange(customer.Orders);
+                _context.Customers.Remove(customer);
+                _context.SaveChanges();
+
+                var result = new
+                {
+                    CustomerDeleteCount = customerDeleteCount,
+                    OrderDeleteCount = orderDeleteCount,
+                    OrderDetailDeleteCount = orderDetailDeleteCount
+                };
+
+                return Ok(result);
             }
-            return Ok(CustomerId);
+
+            
         }
     }
 }
