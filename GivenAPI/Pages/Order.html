@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<h1>List Orders</h1>
+<input type="text" id="from" placeholder="From Date" />
+<input type="text" id="to" placeholder="To Date" />
+<button id="search">Search</button>
+<p id="rsDelete"></p>
+<body>
+    <table class="table">
+        <thead>
+            <th>OrderId</th>
+            <th>CustomerId</th>
+            <th>CustomerName</th>
+            <th>EmployeeId</th>
+            <th>EmployeeName</th>
+            <th>EmployeeDepartmentName</th>
+            <th>OrderDate</th>
+            <th>Freight</th>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</body>
+</html>
+<script type="text/javascript">
+    $(document).ready(function () {
+        ShowAllReservation();
+        function ShowAllReservation() {
+            $("table tbody").html("");
+            $.ajax({
+                url: "http://localhost:5000/api/Order/GetAllOrder",
+                type: "get",
+                contentType: "application/json",
+                success: function (result, status, xhr) {
+                    $.each(result, function (index, value) {
+                        $("tbody").append($("<tr>"));
+                        appendElement = $("tbody tr").last();
+                        appendElement.append($("<td>").html(value["orderId"]));
+                        appendElement.append($("<td>").html(value["customerId"]));
+                        appendElement.append($("<td>").html(value["customerName"] + "&nbsp;&nbsp;<a class=\"delete\">Delete Customer</a>"));
+                        appendElement.append($("<td>").html(value["employeeId"]));
+                        appendElement.append($("<td>").html(value["employeeName"]));
+                        appendElement.append($("<td>").html(value["employeeDepartmentName"]));
+                        appendElement.append($("<td>").html(value["orderDate"]));
+                        appendElement.append($("<td>").html(value["freight"]));
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr);
+                }
+            });
+        }
+        $("table").on("click", ".delete", function () {
+            debugger;
+            var reservationId = $(this).parents("tr").find("td:nth-child(2)").text();
+            $("table tbody").html("");
+            $.ajax({
+                url: "http://localhost:5000/api/Customer/delete/" + reservationId,
+                type: "post",
+                contentType: "application/json",
+                success: function (result, status, xhr) {
+                    $("#rsDelete").show();
+                    $("#rsDelete").html("You have delete " + result.customerDeleteCount + " customer(s), " + result.orderDeleteCount + " order(s) and " + result.orderDetaildeleteCount + " order detail(s)");
+                    ShowAllReservation()
+                },
+                error: function (xhr, status, error) {
+                    console.log(xhr);
+                }
+            });
+        });
+    });
+    $("#search").on("click", function () {
+        debugger;
+        var from = $("#from").val();
+        var to = $("#to").val();
+        $("table tbody").html("");
+        $.ajax({
+            url: "http://localhost:5000/api/Order/getorderbydate/" + from + "/" + to,
+            type: "get",
+            contentType: "application/json",
+            success: function (result, status, xhr) {
+                $.each(result, function (index, value) {
+                    $("tbody").append($("<tr>"));
+                    appendElement = $("tbody tr").last();
+                    appendElement.append($("<td>").html(value["orderId"]));
+                    appendElement.append($("<td>").html(value["customerId"]));
+                    appendElement.append($("<td>").html(value["customerName"] + "&nbsp;&nbsp;<a class=\"delete\">Delete Customer</a>"));
+                    appendElement.append($("<td>").html(value["employeeId"]));
+                    appendElement.append($("<td>").html(value["employeeName"]));
+                    appendElement.append($("<td>").html(value["employeeDepartmentName"]));
+                    appendElement.append($("<td>").html(value["orderDate"]));
+                    appendElement.append($("<td>").html(value["freight"]));
+                });
+            },
+            error: function (xhr, status, error) {
+                console.log(xhr);
+            }
+        });
+    });
+</script>
